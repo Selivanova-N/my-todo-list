@@ -9,14 +9,23 @@
     --bg:#f7f8fb; --card:#ffffff; --text:#0f172a; --muted:#94a3b8;
     --line:#e8ecf1; --accent:#0ea5e9; --green:#16a34a; --danger:#ef4444;
     --day-radius:12px; --day-gap:6px; --day-pad:6px;
+    --super:#ef4444; --important:#f59e0b; --normal:#22c55e; --maybe:#0ea5e9;
   }
   *{box-sizing:border-box}
-  body{ margin:0; background:var(--bg); color:var(--text);
-        font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    overflow-y:auto;                 /* прокрутка есть… */
+    scrollbar-width:none;            /* …но полоса скрыта (Firefox) */
+    -ms-overflow-style:none;         /* IE/Edge legacy */
+  }
+  body::-webkit-scrollbar{ width:0; height:0; } /* Chrome/Safari — скрыть вертикальный скролл */
+
   .app{ max-width:720px; margin:0 auto; padding:16px 12px 28px; }
   .title{ font-weight:800; font-size:18px; margin:0 0 10px 2px; }
 
-  /* Календарь */
+  /* Календарь (полоса скрыта) */
   .cal{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:6px; margin-bottom:14px; }
   .cal-viewport{
     overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; display:flex; gap:0;
@@ -30,41 +39,73 @@
   .day.today{ outline:2px solid rgba(14,165,233,.25); }
   .day.selected{ background:rgba(14,165,233,.1); border-color:rgba(14,165,233,.4); }
 
-  /* Добавление */
-  .add{ display:flex; gap:8px; margin:12px 0; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:10px; align-items:stretch; }
-  .add input[type=text]{ flex:1; min-width:0; padding:12px; border:1px solid var(--line); background:#fff; border-radius:12px; outline:none; }
-  .add select{ width:160px; flex:0 0 auto; padding:12px; border:1px solid var(--line); background:#fff; border-radius:12px; outline:none; }
-  .add button{ padding:12px 14px; border:0; background:var(--accent); color:#fff; border-radius:12px; cursor:pointer; }
+  /* Добавление: 2 строки */
+  .add{
+    gap:8px; margin:12px 0; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:10px;
+    display:grid; grid-template-columns:1fr; grid-row-gap:8px;
+  }
+  .add .row1{ display:flex; }
+  .add .row1 input[type=text]{
+    flex:1; min-width:0; padding:12px; border:1px solid var(--line); background:#fff;
+    border-radius:12px; outline:none;
+  }
+  .add .row2{ display:flex; gap:8px; }
+  .add .row2 select{
+    flex:1; min-width:0; padding:12px; border:1px solid var(--line); background:#fff; border-radius:12px; outline:none;
+  }
+  .add .row2 button{
+    flex:1; padding:12px 14px; border:0; background:var(--accent); color:#fff; border-radius:12px; cursor:pointer;
+  }
 
-  /* Списки */
+  /* Карточки списков */
   .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:6px 6px 10px; }
   .section-title{ font-weight:800; font-size:16px; margin:10px 8px 6px; }
   ul{ list-style:none; padding:0; margin:0; }
-  li{ display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--line);
-      border-radius:14px; padding:10px; margin:8px 6px; transition:box-shadow .15s, transform .15s; }
+  li{
+    display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--line);
+    border-radius:14px; padding:10px; margin:8px 6px; transition:box-shadow .15s, transform .15s;
+  }
   li:hover{ box-shadow:0 6px 16px rgba(2,6,23,.08); transform:translateY(-1px); }
-  .item{ display:flex; align-items:center; gap:10px; flex:1; }
+
+  .item{ display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
 
   /* круглые чекбоксы */
   .chk{ appearance:none; -webkit-appearance:none; width:22px; height:22px; border-radius:50%;
-        border:2px solid var(--line); background:#fff; cursor:pointer; display:inline-block; }
+        border:2px solid var(--line); background:#fff; cursor:pointer; display:inline-block; flex:0 0 auto; }
   .chk:checked{
     border-color:var(--green); background-color:var(--green);
     background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="white" d="M8.143 13.314L4.7 9.871l-1.4 1.4 4.843 4.843 8.514-8.514-1.4-1.4z"/></svg>');
     background-repeat:no-repeat; background-position:center; background-size:14px 14px;
   }
 
-  .text{ flex:1; word-break:break-word; }
+  /* точка приоритета */
+  .dot{ width:10px; height:10px; border-radius:50%; flex:0 0 auto;
+        box-shadow:0 0 0 2px #fff inset, 0 0 0 2px var(--line); }
+  li[data-prio="super"]     .dot{ background:var(--super); }
+  li[data-prio="important"] .dot{ background:var(--important); }
+  li[data-prio="normal"]    .dot{ background:var(--normal); }
+  li[data-prio="maybe"]     .dot{ background:var(--maybe); }
 
-  /* Стили приоритетов (для активных задач) */
-  li[data-prio="super"]   .text{ font-weight:800; }
-  li[data-prio="important"] .text{ text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
-  li[data-prio="maybe"]   .text::after{ content:" ?"; color:var(--accent); font-weight:700; }
+  /* текст + стили приоритетов */
+  .text{ flex:1; min-width:0; word-break:break-word; }
+  li[data-prio="super"]     .text{ font-weight:800; }
+  li[data-prio="important"] .text{ text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:3px; }
 
-  /* Выполненные — всегда зачёркнутые/тусклые, поверх приоритета */
+  /* выполненные */
   li.completed .text{ color:var(--muted); opacity:.6; text-decoration:line-through !important; text-decoration-thickness:2px; }
 
-  .del{ border:1px solid var(--line); background:#fff; color:#d00; width:34px; height:34px; border-radius:10px; cursor:pointer; }
+  /* справа: удалить и знак вопроса */
+  .q-badge{
+    flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+    width:34px; height:34px; border-radius:10px; margin-left:8px;
+    background:#e0f2fe; color:#0284c7; font-weight:800; border:1px solid var(--line);
+  }
+  .del{
+    flex:0 0 auto; border:1px solid var(--line); background:#fff; color:#d00;
+    width:34px; height:34px; border-radius:10px; cursor:pointer;
+  }
+
   .hint{ color:var(--muted); font-size:12px; margin:8px 10px; }
 </style>
 </head>
@@ -73,20 +114,22 @@
     <h2 class="title">To‑Do list</h2>
 
     <!-- Календарь -->
-    <div class="cal">
-      <div class="cal-viewport" id="calViewport"></div>
-    </div>
+    <div class="cal"><div class="cal-viewport" id="calViewport"></div></div>
 
-    <!-- Добавление -->
+    <!-- Добавление (две строки) -->
     <div class="add">
-      <input id="taskInput" type="text" placeholder="Новая задача…" />
-      <select id="prioSelect" title="Приоритет">
-        <option value="normal" selected>Обычные</option>
-        <option value="important">Важные</option>
-        <option value="super">Супер важные</option>
-        <option value="maybe">Подумать над выполнением</option>
-      </select>
-      <button id="addBtn">Добавить</button>
+      <div class="row1">
+        <input id="taskInput" type="text" placeholder="Новая задача…" />
+      </div>
+      <div class="row2">
+        <select id="prioSelect" title="Приоритет">
+          <option value="normal" selected>Обычные</option>
+          <option value="important">Важные</option>
+          <option value="super">Супер важные</option>
+          <option value="maybe">Подумать…</option>
+        </select>
+        <button id="addBtn">Добавить</button>
+      </div>
     </div>
 
     <!-- Активные -->
@@ -106,8 +149,8 @@
 const $ = s => document.querySelector(s);
 
 /* ---------- state ---------- */
-let state = JSON.parse(localStorage.getItem("todo-v7") || '{"selected":"","days":{}}');
-const save = () => localStorage.setItem("todo-v7", JSON.stringify(state));
+let state = JSON.parse(localStorage.getItem("todo-v9") || '{"selected":"","days":{}}');
+const save = () => localStorage.setItem("todo-v9", JSON.stringify(state));
 const isoDate = d => { const x=new Date(d); x.setHours(0,0,0,0); return x.toISOString().slice(0,10); };
 const todayISO = () => isoDate(new Date());
 if(!state.selected) { state.selected = todayISO(); save(); }
@@ -168,18 +211,40 @@ function tasksForSelected(){
 function addTask(){
   const text = input.value.trim();
   if(!text) return;
-  tasksForSelected().push({ text, prio: prioSel.value, done:false, created:Date.now() });
+  tasksForSelected().push({ text, prio: prioSel.value, done:false, created: Date.now() });
   input.value = ""; prioSel.value = "normal";
   save(); renderTasks();
 }
 addBtn.addEventListener("click", addTask);
 input.addEventListener("keypress", e => { if(e.key==="Enter") addTask(); });
 
-function toggleTask(i){
-  const t = tasksForSelected(); t[i].done=!t[i].done; save(); renderTasks();
-}
-function delTask(i){
-  const t = tasksForSelected(); t.splice(i,1); save(); renderTasks();
+function toggleTask(i){ const t = tasksForSelected(); t[i].done=!t[i].done; save(); renderTasks(); }
+function delTask(i){ const t = tasksForSelected(); t.splice(i,1); save(); renderTasks(); }
+
+function makeItem(task, idx, completed){
+  const li  = document.createElement("li");
+  if(completed) li.classList.add("completed");
+  li.setAttribute("data-prio", task.prio);
+
+  const label = document.createElement("label"); label.className = "item";
+
+  const cb = document.createElement("input"); cb.type="checkbox"; cb.className="chk"; cb.checked=!!completed; cb.addEventListener("change",()=>toggleTask(idx));
+  const dot = document.createElement("span"); dot.className="dot";
+  const text = document.createElement("span"); text.className="text"; text.textContent=task.text; text.addEventListener("click",()=>toggleTask(idx));
+
+  label.appendChild(cb); label.appendChild(dot); label.appendChild(text);
+
+  const del = document.createElement("button"); del.className="del"; del.textContent="×"; del.title="Удалить"; del.addEventListener("click",()=>delTask(idx));
+  li.appendChild(label);
+  li.appendChild(del);
+
+  if(task.prio === "maybe"){
+    const q = document.createElement("div");
+    q.className = "q-badge";
+    q.textContent = "?";
+    li.appendChild(q);
+  }
+  return li;
 }
 
 function renderTasks(){
@@ -187,38 +252,11 @@ function renderTasks(){
   const active = tasks.filter(t=>!t.done).sort((a,b)=> prioOrder[a.prio]-prioOrder[b.prio] || a.created-b.created);
   const done   = tasks.filter(t=> t.done).sort((a,b)=> a.created-b.created);
 
-  const renderList = (arr, target, completed=false) => {
-    target.innerHTML = "";
-    arr.forEach(task=>{
-      const idx = tasks.indexOf(task);
-      const li  = document.createElement("li");
-      if(completed) li.classList.add("completed");
-      li.setAttribute("data-prio", task.prio);
+  activeList.innerHTML = "";
+  active.forEach(task=> activeList.appendChild(makeItem(task, tasks.indexOf(task), false)));
 
-      const label = document.createElement("label"); label.className = "item";
-
-      const cb = document.createElement("input");
-      cb.type="checkbox"; cb.className="chk"; cb.checked=completed;
-      cb.addEventListener("change",()=>toggleTask(idx));
-
-      const text = document.createElement("span");
-      text.className="text"; text.textContent=task.text;
-      text.addEventListener("click",()=>toggleTask(idx));
-
-      label.appendChild(cb);
-      label.appendChild(text);
-
-      const del = document.createElement("button");
-      del.className="del"; del.textContent="×"; del.title="Удалить";
-      del.addEventListener("click",()=>delTask(idx));
-
-      li.appendChild(label); li.appendChild(del);
-      target.appendChild(li);
-    });
-  };
-
-  renderList(active, activeList, false);
-  renderList(done, doneList, true);
+  doneList.innerHTML = "";
+  done.forEach(task=> doneList.appendChild(makeItem(task, tasks.indexOf(task), true)));
 
   state.days[state.selected] = [...active, ...done];
   save();
