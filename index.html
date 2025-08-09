@@ -3,130 +3,190 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Чек‑лист</title>
+<title>To‑Do</title>
 <style>
   :root{
-    --bg:#0b1220; --card:#0f172a; --text:#e2e8f0; --muted:#94a3b8;
-    --line:#1f2a44; --accent:#22c55e; --danger:#ef4444; --chip:#1e293b;
+    --bg:#f7f8fb; --card:#ffffff; --text:#0f172a; --muted:#94a3b8;
+    --line:#e8ecf1; --accent:#0ea5e9; --green:#22c55e; --danger:#ef4444;
+    --hi:#ef4444; --mid:#f59e0b; --low:#22c55e; --none:#cbd5e1;
   }
-  [data-theme="light"]{
-    --bg:#f5f7fb; --card:#ffffff; --text:#0f172a; --muted:#64748b;
-    --line:#e5e7eb; --accent:#16a34a; --danger:#ef4444; --chip:#f1f5f9;
-  }
-  html,body{height:100%}
+  *{box-sizing:border-box}
   body{
     margin:0; background:var(--bg); color:var(--text);
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    display:flex; align-items:flex-start; justify-content:center; padding:20px 12px;
   }
-  .app{
-    width:100%; max-width:640px; background:var(--card); border:1px solid var(--line);
-    border-radius:16px; box-shadow:0 10px 30px rgba(2,6,23,.25);
-    overflow:hidden;
+  .app{ max-width:720px; margin:0 auto; padding:16px 12px 28px; }
+
+  /* top row */
+  .top{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .burger{ width:40px; height:40px; border-radius:12px; border:1px solid var(--line); background:#fff; }
+  .title{ font-weight:800; font-size:20px; }
+  .icons{ margin-left:auto; display:flex; gap:8px; }
+  .icon{ width:40px; height:40px; border-radius:12px; border:1px solid var(--line); background:#fff; }
+
+  /* calendar */
+  .cal{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:10px; display:flex; align-items:center; gap:8px; margin-bottom:14px;
   }
-  .top{
-    display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line);
+  .cal-btn{
+    width:36px; height:36px; border-radius:10px; border:1px solid var(--line);
+    background:#fff; cursor:pointer;
   }
-  .title{font-size:18px; font-weight:700}
-  .meta{margin-left:auto; font-size:13px; color:var(--muted)}
-  .theme{
-    border:1px solid var(--line); background:transparent; color:var(--text);
-    padding:6px 10px; border-radius:10px; cursor:pointer;
+  .cal-strip{
+    overflow-x:auto; display:flex; gap:8px; padding:4px 2px;
+    scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
   }
+  .day{
+    min-width:56px; scroll-snap-align:center;
+    background:#fff; border:1px solid var(--line); border-radius:14px;
+    padding:8px 8px; text-align:center;
+  }
+  .dow{ font-size:11px; color:var(--muted); }
+  .dnum{ font-weight:700; }
+  .day.active{ background:rgba(14,165,233,.1); border-color:rgba(14,165,233,.3); }
+
+  /* add */
   .add{
-    display:flex; gap:8px; padding:14px 16px; border-bottom:1px solid var(--line);
+    display:flex; gap:8px; margin:14px 0; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:10px;
   }
-  .add input{
-    flex:1; padding:11px 12px; border:1px solid var(--line); background:transparent;
-    color:var(--text); border-radius:10px; outline:none;
+  .add input[type=text]{
+    flex:1; padding:12px; border:1px solid var(--line); background:#fff; border-radius:12px; outline:none;
+  }
+  .add select{
+    padding:12px; border:1px solid var(--line); background:#fff; border-radius:12px; outline:none;
   }
   .add button{
-    padding:11px 14px; border:0; background:var(--accent); color:#fff; border-radius:10px; cursor:pointer;
+    padding:12px 14px; border:0; background:var(--accent); color:#fff; border-radius:12px; cursor:pointer;
   }
-  .tabs{ display:flex; gap:8px; padding:8px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap;}
-  .tab{
-    font-size:13px; padding:6px 10px; border:1px solid var(--line); border-radius:999px; cursor:pointer;
-    background:var(--chip); color:var(--text); opacity:.8;
+
+  /* lists */
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px; padding:6px 6px 10px;
   }
-  .tab.active{opacity:1; outline:2px solid rgba(34,197,94,.3)}
-  ul{list-style:none; margin:0; padding:8px 12px 12px;}
+  .section-title{ font-weight:800; font-size:16px; margin:10px 8px 6px; }
+
+  ul{ list-style:none; padding:0; margin:0; }
   li{
-    display:flex; align-items:center; gap:10px; background:transparent;
-    border:1px solid var(--line); border-radius:12px; padding:10px 10px; margin:8px 4px;
-    transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--line);
+    border-radius:14px; padding:10px; margin:8px 6px; transition:box-shadow .15s ease, transform .15s ease;
   }
-  li:hover{ transform:translateY(-1px); box-shadow:0 8px 18px rgba(2,6,23,.2); }
-  .item{ display:flex; align-items:center; gap:10px; flex:1; cursor:pointer; }
-  .item input[type=checkbox]{ width:20px; height:20px; accent-color:var(--accent); cursor:pointer; }
+  li:hover{ box-shadow:0 6px 16px rgba(2,6,23,.08); transform:translateY(-1px); }
+  .item{ display:flex; align-items:center; gap:10px; flex:1; }
+  .item input[type=checkbox]{ width:22px; height:22px; border-radius:50%; accent-color:var(--green); cursor:pointer; }
   .text{ flex:1; word-break:break-word; }
-  .badge{
-    font-size:12px; color:var(--muted); background:var(--chip); border:1px solid var(--line);
-    padding:2px 8px; border-radius:999px;
-  }
   li.completed .text{ color:var(--muted); opacity:.6; text-decoration:line-through; text-decoration-thickness:2px; }
-  .actions{ display:flex; gap:6px; }
-  .btn{
-    border:1px solid var(--line); background:transparent; color:var(--text);
-    padding:6px 10px; border-radius:10px; cursor:pointer; font-size:13px;
+  .prio{
+    width:10px; height:10px; border-radius:50%;
+    box-shadow:0 0 0 2px #fff inset, 0 0 0 2px var(--line);
   }
-  .btn-danger{ border-color:rgba(239,68,68,.4); color:#fff; background:var(--danger); }
-  .footer{ display:flex; gap:8px; justify-content:space-between; align-items:center; padding:12px 16px; border-top:1px solid var(--line); color:var(--muted); font-size:13px;}
-  .hide-done{ margin-left:auto; }
+  .p-hi{ background:var(--hi) }
+  .p-mid{ background:var(--mid) }
+  .p-low{ background:var(--low) }
+  .p-none{ background:var(--none) }
+  .del{
+    border:1px solid var(--line); background:#fff; color:#d00; width:34px; height:34px; border-radius:10px; cursor:pointer;
+  }
+  .hint{ color:var(--muted); font-size:12px; margin:8px 10px; }
 </style>
 </head>
-<body data-theme="dark">
+<body>
   <div class="app">
     <div class="top">
-      <div class="title">Чек‑лист</div>
-      <button class="theme" id="themeBtn" title="Сменить тему">Тема: Тёмная</button>
-      <div class="meta" id="meta"></div>
+      <button class="burger" aria-label="menu"></button>
+      <div class="title">To‑Do list</div>
+      <div class="icons">
+        <button class="icon" aria-label="calendar"></button>
+        <button class="icon" aria-label="more"></button>
+      </div>
     </div>
 
+    <!-- Календарь: горизонтальная лента -->
+    <div class="cal">
+      <button class="cal-btn" id="prevWeek" aria-label="prev">←</button>
+      <div class="cal-strip" id="calStrip"></div>
+      <button class="cal-btn" id="nextWeek" aria-label="next">→</button>
+    </div>
+
+    <!-- Добавление задачи -->
     <div class="add">
       <input id="taskInput" type="text" placeholder="Новая задача…" />
+      <select id="prioSelect" title="Приоритет">
+        <option value="none">None</option>
+        <option value="low">Low</option>
+        <option value="mid">Medium</option>
+        <option value="hi">High</option>
+      </select>
       <button id="addBtn">Добавить</button>
     </div>
 
-    <div class="tabs">
-      <button class="tab active" data-filter="all">Все</button>
-      <button class="tab" data-filter="active">Активные</button>
-      <button class="tab" data-filter="done">Выполненные</button>
-      <button class="tab hide-done" id="toggleDone">Скрывать выполненные</button>
+    <!-- Активные задачи -->
+    <div class="card">
+      <ul id="activeList"></ul>
+      <div class="hint">Клик по флажку или тексту — отметить/снять. Выполненные автоматически окажутся ниже, в «Completed».</div>
     </div>
 
-    <ul id="list"></ul>
-
-    <div class="footer">
-      <div id="hint">Клик по флажку или тексту — отметить. Выполненные тускнеют и уходят вниз.</div>
-      <button class="btn btn-danger" id="clearDone">Очистить выполненные</button>
+    <!-- Completed -->
+    <div class="card" style="margin-top:14px;">
+      <div class="section-title">Completed</div>
+      <ul id="doneList"></ul>
     </div>
   </div>
 
 <script>
 const $ = s => document.querySelector(s);
-const list = $("#list");
-const input = $("#taskInput");
-const addBtn = $("#addBtn");
-const meta = $("#meta");
-const tabs = document.querySelectorAll(".tab[data-filter]");
-const toggleDoneBtn = $("#toggleDone");
-const clearDoneBtn = $("#clearDone");
-const themeBtn = $("#themeBtn");
-const root = document.body;
+const activeList = $("#activeList");
+const doneList   = $("#doneList");
+const input      = $("#taskInput");
+const prioSel    = $("#prioSelect");
+const addBtn     = $("#addBtn");
 
-let state = JSON.parse(localStorage.getItem("todo-v2") || '{"tasks":[],"hideDone":false,"theme":"dark"}');
-root.setAttribute("data-theme", state.theme || "dark");
-themeBtn.textContent = "Тема: " + (state.theme === "light" ? "Светлая" : "Тёмная");
+let state = JSON.parse(localStorage.getItem("todo-v3") || '{"tasks":[]}');
 
-function save(){ localStorage.setItem("todo-v2", JSON.stringify(state)); }
+function save(){ localStorage.setItem("todo-v3", JSON.stringify(state)); }
 
+/* ---------- Calendar strip ---------- */
+const calStrip = $("#calStrip");
+let weekOffset = 0; // 0 = текущая неделя, -1 предыдущая, +1 следующая
+const DOW = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+function startOfWeek(d){
+  const dt = new Date(d);
+  const day = (dt.getDay()+6)%7; // 0=Mon
+  dt.setDate(dt.getDate()-day);
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function renderWeek(){
+  calStrip.innerHTML = "";
+  const today = new Date();
+  const start = addDays(startOfWeek(today), weekOffset*7);
+
+  for(let i=0;i<7;i++){
+    const d = addDays(start,i);
+    const el = document.createElement("div");
+    el.className = "day";
+    if(d.toDateString() === today.toDateString()) el.classList.add("active");
+    const dow = document.createElement("div"); dow.className="dow"; dow.textContent = DOW[i];
+    const num = document.createElement("div"); num.className="dnum"; num.textContent = d.getDate();
+    el.appendChild(dow); el.appendChild(num);
+    calStrip.appendChild(el);
+  }
+}
+$("#prevWeek").addEventListener("click", ()=>{ weekOffset--; renderWeek(); });
+$("#nextWeek").addEventListener("click", ()=>{ weekOffset++; renderWeek(); });
+renderWeek();
+
+/* ---------- Tasks ---------- */
 function addTask(){
   const text = input.value.trim();
   if(!text) return;
-  state.tasks.push({ text, done:false, created:Date.now() });
-  input.value = "";
-  render();
-  save();
+  const prio = prioSel.value; // hi, mid, low, none
+  state.tasks.push({ text, prio, done:false, created:Date.now() });
+  input.value = ""; prioSel.value = "none";
+  render(); save();
 }
 addBtn.addEventListener("click", addTask);
 input.addEventListener("keypress", e => { if(e.key==="Enter") addTask(); });
@@ -140,77 +200,77 @@ function delTask(idx){
   render(); save();
 }
 
-function setFilter(name){
-  tabs.forEach(t=>t.classList.toggle("active", t.dataset.filter===name));
-  state.filter = name; save(); render();
-}
-tabs.forEach(t => t.addEventListener("click", () => setFilter(t.dataset.filter)));
-
-toggleDoneBtn.addEventListener("click", () => {
-  state.hideDone = !state.hideDone;
-  toggleDoneBtn.textContent = state.hideDone ? "Показывать выполненные" : "Скрывать выполненные";
-  save(); render();
-});
-
-clearDoneBtn.addEventListener("click", () => {
-  state.tasks = state.tasks.filter(t => !t.done);
-  render(); save();
-});
-
-themeBtn.addEventListener("click", () => {
-  state.theme = (state.theme === "light") ? "dark" : "light";
-  root.setAttribute("data-theme", state.theme);
-  themeBtn.textContent = "Тема: " + (state.theme === "light" ? "Светлая" : "Тёмная");
-  save();
-});
-
+const prioOrder = { hi:0, mid:1, low:2, none:3 };
 function render(){
-  // сортировка: активные сверху, выполненные снизу (сохраняем относительный порядок)
-  const active = state.tasks.filter(t=>!t.done);
-  const done = state.tasks.filter(t=>t.done);
-  const ordered = [...active, ...done];
+  const active = state.tasks.filter(t=>!t.done)
+    .sort((a,b)=> prioOrder[a.prio]-prioOrder[b.prio] || a.created-b.created);
+  const done   = state.tasks.filter(t=>t.done)
+    .sort((a,b)=> a.created-b.created);
 
-  // фильтры
-  let filtered = ordered;
-  if(state.filter==="active") filtered = active;
-  if(state.filter==="done") filtered = done;
-  if(state.hideDone) filtered = filtered.filter(t=>!t.done);
-
-  list.innerHTML = "";
-  filtered.forEach(task => {
+  // Визуал активных
+  activeList.innerHTML = "";
+  active.forEach(task=>{
     const idx = state.tasks.indexOf(task);
-    const li = document.createElement("li");
-    if(task.done) li.classList.add("completed");
+    const li  = document.createElement("li");
 
-    const item = document.createElement("label");
-    item.className = "item";
+    const label = document.createElement("label");
+    label.className = "item";
+
     const cb = document.createElement("input");
-    cb.type = "checkbox"; cb.checked = task.done;
-    cb.addEventListener("change", () => toggleTask(idx));
-    const txt = document.createElement("span");
-    txt.className = "text"; txt.textContent = task.text;
-    txt.addEventListener("click", () => toggleTask(idx));
+    cb.type = "checkbox"; cb.checked = false;
+    cb.addEventListener("change", ()=>toggleTask(idx));
 
-    item.appendChild(cb); item.appendChild(txt);
+    const dot = document.createElement("span");
+    dot.className = "prio p-"+task.prio;
+
+    const text = document.createElement("span");
+    text.className = "text"; text.textContent = task.text;
+    text.addEventListener("click", ()=>toggleTask(idx));
+
+    label.appendChild(cb); label.appendChild(dot); label.appendChild(text);
 
     const del = document.createElement("button");
-    del.className = "btn"; del.textContent = "Удалить";
-    del.addEventListener("click", () => delTask(idx));
+    del.className = "del"; del.textContent = "×"; del.title = "Удалить";
+    del.addEventListener("click", ()=>delTask(idx));
 
-    li.appendChild(item); li.appendChild(del);
-    list.appendChild(li);
+    li.appendChild(label); li.appendChild(del);
+    activeList.appendChild(li);
   });
 
-  // обновляем счётчик
-  const activeCount = state.tasks.filter(t=>!t.done).length;
-  meta.textContent = `${activeCount} активн. • ${state.tasks.length} всего`;
+  // Визуал завершённых
+  doneList.innerHTML = "";
+  done.forEach(task=>{
+    const idx = state.tasks.indexOf(task);
+    const li  = document.createElement("li");
+    li.classList.add("completed");
 
-  // переписываем порядок и сохраняем
-  state.tasks = ordered;
+    const label = document.createElement("label");
+    label.className = "item";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.checked = true;
+    cb.addEventListener("change", ()=>toggleTask(idx));
+
+    const dot = document.createElement("span");
+    dot.className = "prio p-"+task.prio;
+
+    const text = document.createElement("span");
+    text.className = "text"; text.textContent = task.text;
+    text.addEventListener("click", ()=>toggleTask(idx));
+
+    label.appendChild(cb); label.appendChild(dot); label.appendChild(text);
+
+    const del = document.createElement("button");
+    del.className = "del"; del.textContent = "×"; del.title = "Удалить";
+    del.addEventListener("click", ()=>delTask(idx));
+
+    li.appendChild(label); li.appendChild(del);
+    doneList.appendChild(li);
+  });
+
+  // пересохраняем порядок (активные сверху, завершённые снизу)
+  state.tasks = [...active, ...done];
   save();
-
-  // UI текста у кнопки скрытия
-  toggleDoneBtn.textContent = state.hideDone ? "Показывать выполненные" : "Скрывать выполненные";
 }
 render();
 </script>
