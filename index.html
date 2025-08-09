@@ -9,48 +9,55 @@
     --bg:#f7f8fb; --card:#ffffff; --text:#0f172a; --muted:#94a3b8;
     --line:#e8ecf1; --accent:#0ea5e9; --green:#16a34a; --danger:#ef4444;
     --hi:#ef4444; --mid:#f59e0b; --low:#22c55e; --none:#cbd5e1;
+    --day-radius:12px; --day-gap:6px; --day-pad:6px; /* компактнее дни */
   }
   *{box-sizing:border-box}
   body{ margin:0; background:var(--bg); color:var(--text);
         font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
   .app{ max-width:720px; margin:0 auto; padding:16px 12px 28px; }
 
-  /* header (минимальный) */
-  .top{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-  .title{ font-weight:800; font-size:20px; }
+  .title{ font-weight:800; font-size:18px; margin:0 0 10px 2px; }
 
-  /* calendar */
+  /* КАЛЕНДАРЬ: свайп по неделям, в каждой неделе 7 мелких ячеек, всё влезает */
   .cal{ background:var(--card); border:1px solid var(--line); border-radius:16px;
-        padding:10px; display:flex; align-items:center; gap:8px; margin-bottom:14px; }
-  .cal-btn{ width:36px; height:36px; border-radius:10px; border:1px solid var(--line);
-            background:#fff; cursor:pointer; }
-  .cal-strip{ overflow-x:auto; display:flex; gap:8px; padding:4px 2px;
-              scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
-  .day{ min-width:56px; scroll-snap-align:center; background:#fff; border:1px solid var(--line);
-        border-radius:14px; padding:8px 8px; text-align:center; cursor:pointer; }
-  .dow{ font-size:11px; color:var(--muted); }
-  .dnum{ font-weight:700; }
+        padding:6px; margin-bottom:14px; }
+  .cal-viewport{
+    overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+    display:flex; gap:0;
+  }
+  .week{
+    flex:0 0 100%;
+    display:grid; grid-template-columns:repeat(7,1fr);
+    gap:var(--day-gap); padding:4px; scroll-snap-align:start;
+  }
+  .day{
+    background:#fff; border:1px solid var(--line); border-radius:var(--day-radius);
+    padding:var(--day-pad) 4px; text-align:center; cursor:pointer;
+    user-select:none;
+  }
+  .dow{ font-size:10px; color:var(--muted); line-height:1; }
+  .dnum{ font-weight:700; font-size:14px; line-height:1.2; }
   .day.today{ outline:2px solid rgba(14,165,233,.25); }
   .day.selected{ background:rgba(14,165,233,.1); border-color:rgba(14,165,233,.4); }
 
-  /* add line */
-  .add{ display:flex; gap:8px; margin:14px 0; background:var(--card); border:1px solid var(--line);
+  /* Добавление */
+  .add{ display:flex; gap:8px; margin:12px 0; background:var(--card); border:1px solid var(--line);
         border-radius:16px; padding:10px; }
   .add input[type=text]{ flex:1; padding:12px; border:1px solid var(--line); background:#fff;
                          border-radius:12px; outline:none; }
   .add select{ padding:12px; border:1px solid var(--line); background:#fff; border-radius:12px; outline:none; }
   .add button{ padding:12px 14px; border:0; background:var(--accent); color:#fff; border-radius:12px; cursor:pointer; }
 
-  /* lists */
+  /* Списки */
   .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:6px 6px 10px; }
   .section-title{ font-weight:800; font-size:16px; margin:10px 8px 6px; }
   ul{ list-style:none; padding:0; margin:0; }
   li{ display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--line);
-      border-radius:14px; padding:10px; margin:8px 6px; transition:box-shadow .15s ease, transform .15s ease; }
+      border-radius:14px; padding:10px; margin:8px 6px; transition:box-shadow .15s, transform .15s; }
   li:hover{ box-shadow:0 6px 16px rgba(2,6,23,.08); transform:translateY(-1px); }
   .item{ display:flex; align-items:center; gap:10px; flex:1; }
 
-  /* КРУГЛЫЕ флажки (кастомные) */
+  /* круглые флажки */
   .chk{ appearance:none; -webkit-appearance:none; width:22px; height:22px; border-radius:50%;
         border:2px solid var(--line); background:#fff; cursor:pointer; display:inline-block; }
   .chk:checked{
@@ -72,13 +79,11 @@
 </head>
 <body>
   <div class="app">
-    <div class="top"><div class="title">To‑Do list</div></div>
+    <h2 class="title">To‑Do list</h2>
 
-    <!-- Календарь -->
+    <!-- Календарь: свайп по неделям, внутри неделя помещается целиком -->
     <div class="cal">
-      <button class="cal-btn" id="prevWeek" aria-label="prev">←</button>
-      <div class="cal-strip" id="calStrip"></div>
-      <button class="cal-btn" id="nextWeek" aria-label="next">→</button>
+      <div class="cal-viewport" id="calViewport"></div>
     </div>
 
     <!-- Добавление -->
@@ -96,7 +101,7 @@
     <!-- Активные -->
     <div class="card">
       <ul id="activeList"></ul>
-      <div class="hint">Выбирайте день вверху. Задачи хранятся отдельно для каждой даты. Клик по флажку/тексту — отметить.</div>
+      <div class="hint">Выбирай день сверху. Свайпай календарь влево/вправо для соседних недель.</div>
     </div>
 
     <!-- Completed -->
@@ -110,54 +115,62 @@
 const $ = s => document.querySelector(s);
 
 /* ---------- state ---------- */
-// структура: { selected:"YYYY-MM-DD", days:{ "YYYY-MM-DD": [ {text, prio, done, created} ] } }
-let state = JSON.parse(localStorage.getItem("todo-v4") || '{"selected":"","days":{}}');
-
-function save(){ localStorage.setItem("todo-v4", JSON.stringify(state)); }
-function isoDate(d){ const x=new Date(d); x.setHours(0,0,0,0); return x.toISOString().slice(0,10); }
-function todayISO(){ return isoDate(new Date()); }
-
+let state = JSON.parse(localStorage.getItem("todo-v5") || '{"selected":"","days":{}}');
+const save = () => localStorage.setItem("todo-v5", JSON.stringify(state));
+const isoDate = d => { const x=new Date(d); x.setHours(0,0,0,0); return x.toISOString().slice(0,10); };
+const todayISO = () => isoDate(new Date());
 if(!state.selected) { state.selected = todayISO(); save(); }
 
-/* ---------- calendar ---------- */
-const calStrip = $("#calStrip");
-let weekAnchor = new Date(state.selected); // неделя где лежит выбранный день
+/* ---------- calendar weekly viewport ---------- */
+const vp = $("#calViewport");
 const DOW = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const startOfWeek = d => { const dt=new Date(d); const day=(dt.getDay()+6)%7; dt.setDate(dt.getDate()-day); dt.setHours(0,0,0,0); return dt; };
+const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
 
-function startOfWeek(d){
-  const dt = new Date(d);
-  const day = (dt.getDay()+6)%7; // 0=Mon
-  dt.setDate(dt.getDate()-day);
-  dt.setHours(0,0,0,0);
-  return dt;
-}
-function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+let anchor = new Date(state.selected); // неделя для позиционирования
 
-function renderWeek(){
-  calStrip.innerHTML = "";
-  const start = startOfWeek(weekAnchor);
-  const sel = state.selected;
-  const today = todayISO();
+function renderWeeks() {
+  vp.innerHTML = "";
+  const base = startOfWeek(anchor);
+  const pages = 12; // 12 недель (±6) хватит для свайпа
+  const center = Math.floor(pages/2);
 
-  for(let i=0;i<7;i++){
-    const d = addDays(start,i);
-    const id = isoDate(d);
+  for(let w=0; w<pages; w++){
+    const weekStart = addDays(base, (w-center)*7);
+    const week = document.createElement("div");
+    week.className = "week";
 
-    const el = document.createElement("div");
-    el.className = "day";
-    if(id === today) el.classList.add("today");
-    if(id === sel) el.classList.add("selected");
+    for(let i=0;i<7;i++){
+      const d = addDays(weekStart,i);
+      const id = isoDate(d);
 
-    const dow = document.createElement("div"); dow.className="dow"; dow.textContent = DOW[i];
-    const num = document.createElement("div"); num.className="dnum"; num.textContent = d.getDate();
-    el.appendChild(dow); el.appendChild(num);
-    el.addEventListener("click", () => { state.selected = id; weekAnchor = d; save(); renderWeek(); renderTasks(); });
-    calStrip.appendChild(el);
+      const el = document.createElement("div");
+      el.className = "day";
+      if(id === todayISO()) el.classList.add("today");
+      if(id === state.selected) el.classList.add("selected");
+
+      const dow = document.createElement("div"); dow.className="dow"; dow.textContent = DOW[i];
+      const num = document.createElement("div"); num.className="dnum"; num.textContent = d.getDate();
+      el.appendChild(dow); el.appendChild(num);
+
+      el.addEventListener("click", () => {
+        state.selected = id;
+        anchor = d;
+        save();
+        renderWeeks();
+        renderTasks();
+      });
+
+      week.appendChild(el);
+    }
+    vp.appendChild(week);
   }
+
+  // прокрутить к центральной (текущей) неделе
+  const currentWeek = vp.children[center];
+  if(currentWeek) currentWeek.scrollIntoView({behavior:"auto", inline:"start"});
 }
-$("#prevWeek").addEventListener("click", ()=>{ weekAnchor = addDays(weekAnchor,-7); renderWeek(); });
-$("#nextWeek").addEventListener("click", ()=>{ weekAnchor = addDays(weekAnchor, 7); renderWeek(); });
-renderWeek();
+renderWeeks();
 
 /* ---------- tasks for selected day ---------- */
 const activeList = $("#activeList");
@@ -173,99 +186,62 @@ function tasksForSelected(){
   if(!state.days[key]) state.days[key] = [];
   return state.days[key];
 }
-
 function addTask(){
   const text = input.value.trim();
   if(!text) return;
-  const prio = prioSel.value;
-  const tasks = tasksForSelected();
-  tasks.push({ text, prio, done:false, created:Date.now() });
+  tasksForSelected().push({ text, prio: prioSel.value, done:false, created:Date.now() });
   input.value = ""; prioSel.value = "none";
   save(); renderTasks();
 }
 addBtn.addEventListener("click", addTask);
 input.addEventListener("keypress", e => { if(e.key==="Enter") addTask(); });
 
-function toggleTask(index){
-  const tasks = tasksForSelected();
-  tasks[index].done = !tasks[index].done;
-  save(); renderTasks();
+function toggleTask(i){
+  const t = tasksForSelected(); t[i].done=!t[i].done; save(); renderTasks();
 }
-function delTask(index){
-  const tasks = tasksForSelected();
-  tasks.splice(index,1);
-  save(); renderTasks();
+function delTask(i){
+  const t = tasksForSelected(); t.splice(i,1); save(); renderTasks();
 }
 
 function renderTasks(){
   const tasks = tasksForSelected();
-  const active = tasks.filter(t=>!t.done)
-    .sort((a,b)=> prioOrder[a.prio]-prioOrder[b.prio] || a.created-b.created);
-  const done   = tasks.filter(t=> t.done)
-    .sort((a,b)=> a.created-b.created);
+  const active = tasks.filter(t=>!t.done).sort((a,b)=> prioOrder[a.prio]-prioOrder[b.prio] || a.created-b.created);
+  const done   = tasks.filter(t=> t.done).sort((a,b)=> a.created-b.created);
 
-  // active
   activeList.innerHTML = "";
   active.forEach(task=>{
     const idx = tasks.indexOf(task);
     const li  = document.createElement("li");
+    const label = document.createElement("label"); label.className = "item";
 
-    const label = document.createElement("label");
-    label.className = "item";
-
-    const cb = document.createElement("input");
-    cb.type = "checkbox"; cb.className = "chk"; cb.checked = false;
-    cb.addEventListener("change", ()=>toggleTask(idx));
-
-    const dot = document.createElement("span");
-    dot.className = "prio p-"+task.prio;
-
-    const text = document.createElement("span");
-    text.className = "text"; text.textContent = task.text;
-    text.addEventListener("click", ()=>toggleTask(idx));
+    const cb = document.createElement("input"); cb.type="checkbox"; cb.className="chk"; cb.checked=false; cb.addEventListener("change",()=>toggleTask(idx));
+    const dot = document.createElement("span"); dot.className = "prio p-"+task.prio;
+    const text = document.createElement("span"); text.className="text"; text.textContent=task.text; text.addEventListener("click",()=>toggleTask(idx));
 
     label.appendChild(cb); label.appendChild(dot); label.appendChild(text);
 
-    const del = document.createElement("button");
-    del.className = "del"; del.textContent = "×"; del.title = "Удалить";
-    del.addEventListener("click", ()=>delTask(idx));
+    const del = document.createElement("button"); del.className="del"; del.textContent="×"; del.title="Удалить"; del.addEventListener("click",()=>delTask(idx));
 
-    li.appendChild(label); li.appendChild(del);
-    activeList.appendChild(li);
+    li.appendChild(label); li.appendChild(del); activeList.appendChild(li);
   });
 
-  // done
   doneList.innerHTML = "";
   done.forEach(task=>{
     const idx = tasks.indexOf(task);
-    const li  = document.createElement("li");
-    li.classList.add("completed");
+    const li  = document.createElement("li"); li.classList.add("completed");
+    const label = document.createElement("label"); label.className = "item";
 
-    const label = document.createElement("label");
-    label.className = "item";
-
-    const cb = document.createElement("input");
-    cb.type = "checkbox"; cb.className = "chk"; cb.checked = true;
-    cb.addEventListener("change", ()=>toggleTask(idx));
-
-    const dot = document.createElement("span");
-    dot.className = "prio p-"+task.prio;
-
-    const text = document.createElement("span");
-    text.className = "text"; text.textContent = task.text;
-    text.addEventListener("click", ()=>toggleTask(idx));
+    const cb = document.createElement("input"); cb.type="checkbox"; cb.className="chk"; cb.checked=true; cb.addEventListener("change",()=>toggleTask(idx));
+    const dot = document.createElement("span"); dot.className = "prio p-"+task.prio;
+    const text = document.createElement("span"); text.className="text"; text.textContent=task.text; text.addEventListener("click",()=>toggleTask(idx));
 
     label.appendChild(cb); label.appendChild(dot); label.appendChild(text);
 
-    const del = document.createElement("button");
-    del.className = "del"; del.textContent = "×"; del.title = "Удалить";
-    del.addEventListener("click", ()=>delTask(idx));
+    const del = document.createElement("button"); del.className="del"; del.textContent="×"; del.title="Удалить"; del.addEventListener("click",()=>delTask(idx));
 
-    li.appendChild(label); li.appendChild(del);
-    doneList.appendChild(li);
+    li.appendChild(label); li.appendChild(del); doneList.appendChild(li);
   });
 
-  // сохраняем новый порядок (активные сверху, выполненные снизу)
   state.days[state.selected] = [...active, ...done];
   save();
 }
