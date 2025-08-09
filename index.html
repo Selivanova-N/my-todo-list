@@ -1,0 +1,125 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Мой чек-лист</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body {
+    font-family: system-ui, Arial, sans-serif;
+    max-width: 480px;
+    margin: 20px auto;
+    padding: 10px;
+    background: #f9f9f9;
+  }
+  h1 { text-align: center; }
+  #new-task {
+    display: flex;
+    margin-bottom: 10px;
+  }
+  #new-task input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px 0 0 6px;
+    outline: none;
+  }
+  #new-task button {
+    padding: 8px 12px;
+    border: none;
+    background: #4CAF50;
+    color: white;
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+  }
+  ul { list-style: none; padding: 0; }
+  li {
+    background: white;
+    margin-bottom: 6px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+  }
+  li.completed span {
+    text-decoration: line-through;
+    color: #888;
+  }
+  li button {
+    margin-left: auto;
+    background: #ff4d4d;
+    border: none;
+    color: white;
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+<h1>Мой чек-лист</h1>
+<div id="new-task">
+  <input type="text" placeholder="Новая задача...">
+  <button>+</button>
+</div>
+<ul id="tasks"></ul>
+
+<script>
+const taskInput = document.querySelector('#new-task input');
+const addButton = document.querySelector('#new-task button');
+const taskList = document.getElementById('tasks');
+
+// Загружаем задачи из localStorage
+let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+renderTasks();
+
+addButton.addEventListener('click', addTask);
+taskInput.addEventListener('keypress', e => {
+  if (e.key === 'Enter') addTask();
+});
+
+function addTask() {
+  const text = taskInput.value.trim();
+  if (!text) return;
+  tasks.push({ text, done: false });
+  saveTasks();
+  renderTasks();
+  taskInput.value = '';
+}
+
+function toggleTask(index) {
+  tasks[index].done = !tasks[index].done;
+  saveTasks();
+  renderTasks();
+}
+
+function deleteTask(index) {
+  tasks.splice(index, 1);
+  saveTasks();
+  renderTasks();
+}
+
+function saveTasks() {
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+function renderTasks() {
+  taskList.innerHTML = '';
+  tasks.forEach((task, i) => {
+    const li = document.createElement('li');
+    if (task.done) li.classList.add('completed');
+    const span = document.createElement('span');
+    span.textContent = task.text;
+    span.style.cursor = 'pointer';
+    span.onclick = () => toggleTask(i);
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '×';
+    delBtn.onclick = () => deleteTask(i);
+    li.appendChild(span);
+    li.appendChild(delBtn);
+    taskList.appendChild(li);
+  });
+}
+</script>
+</body>
+</html>
