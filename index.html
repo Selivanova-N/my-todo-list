@@ -7,109 +7,81 @@
 <style>
   :root{
     --bg:#f7f8fb; --card:#ffffff; --text:#0f172a; --muted:#94a3b8;
-    --line:#e8ecf1; --accent:#0ea5e9; --green:#22c55e; --danger:#ef4444;
+    --line:#e8ecf1; --accent:#0ea5e9; --green:#16a34a; --danger:#ef4444;
     --hi:#ef4444; --mid:#f59e0b; --low:#22c55e; --none:#cbd5e1;
   }
   *{box-sizing:border-box}
-  body{
-    margin:0; background:var(--bg); color:var(--text);
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  }
+  body{ margin:0; background:var(--bg); color:var(--text);
+        font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
   .app{ max-width:720px; margin:0 auto; padding:16px 12px 28px; }
 
-  /* top row */
+  /* header (минимальный) */
   .top{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-  .burger{ width:40px; height:40px; border-radius:12px; border:1px solid var(--line); background:#fff; }
   .title{ font-weight:800; font-size:20px; }
-  .icons{ margin-left:auto; display:flex; gap:8px; }
-  .icon{ width:40px; height:40px; border-radius:12px; border:1px solid var(--line); background:#fff; }
 
   /* calendar */
-  .cal{
-    background:var(--card); border:1px solid var(--line); border-radius:16px;
-    padding:10px; display:flex; align-items:center; gap:8px; margin-bottom:14px;
-  }
-  .cal-btn{
-    width:36px; height:36px; border-radius:10px; border:1px solid var(--line);
-    background:#fff; cursor:pointer;
-  }
-  .cal-strip{
-    overflow-x:auto; display:flex; gap:8px; padding:4px 2px;
-    scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
-  }
-  .day{
-    min-width:56px; scroll-snap-align:center;
-    background:#fff; border:1px solid var(--line); border-radius:14px;
-    padding:8px 8px; text-align:center;
-  }
+  .cal{ background:var(--card); border:1px solid var(--line); border-radius:16px;
+        padding:10px; display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .cal-btn{ width:36px; height:36px; border-radius:10px; border:1px solid var(--line);
+            background:#fff; cursor:pointer; }
+  .cal-strip{ overflow-x:auto; display:flex; gap:8px; padding:4px 2px;
+              scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
+  .day{ min-width:56px; scroll-snap-align:center; background:#fff; border:1px solid var(--line);
+        border-radius:14px; padding:8px 8px; text-align:center; cursor:pointer; }
   .dow{ font-size:11px; color:var(--muted); }
   .dnum{ font-weight:700; }
-  .day.active{ background:rgba(14,165,233,.1); border-color:rgba(14,165,233,.3); }
+  .day.today{ outline:2px solid rgba(14,165,233,.25); }
+  .day.selected{ background:rgba(14,165,233,.1); border-color:rgba(14,165,233,.4); }
 
-  /* add */
-  .add{
-    display:flex; gap:8px; margin:14px 0; background:var(--card); border:1px solid var(--line);
-    border-radius:16px; padding:10px;
-  }
-  .add input[type=text]{
-    flex:1; padding:12px; border:1px solid var(--line); background:#fff; border-radius:12px; outline:none;
-  }
-  .add select{
-    padding:12px; border:1px solid var(--line); background:#fff; border-radius:12px; outline:none;
-  }
-  .add button{
-    padding:12px 14px; border:0; background:var(--accent); color:#fff; border-radius:12px; cursor:pointer;
-  }
+  /* add line */
+  .add{ display:flex; gap:8px; margin:14px 0; background:var(--card); border:1px solid var(--line);
+        border-radius:16px; padding:10px; }
+  .add input[type=text]{ flex:1; padding:12px; border:1px solid var(--line); background:#fff;
+                         border-radius:12px; outline:none; }
+  .add select{ padding:12px; border:1px solid var(--line); background:#fff; border-radius:12px; outline:none; }
+  .add button{ padding:12px 14px; border:0; background:var(--accent); color:#fff; border-radius:12px; cursor:pointer; }
 
   /* lists */
-  .card{
-    background:var(--card); border:1px solid var(--line); border-radius:16px; padding:6px 6px 10px;
-  }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:6px 6px 10px; }
   .section-title{ font-weight:800; font-size:16px; margin:10px 8px 6px; }
-
   ul{ list-style:none; padding:0; margin:0; }
-  li{
-    display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--line);
-    border-radius:14px; padding:10px; margin:8px 6px; transition:box-shadow .15s ease, transform .15s ease;
-  }
+  li{ display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--line);
+      border-radius:14px; padding:10px; margin:8px 6px; transition:box-shadow .15s ease, transform .15s ease; }
   li:hover{ box-shadow:0 6px 16px rgba(2,6,23,.08); transform:translateY(-1px); }
   .item{ display:flex; align-items:center; gap:10px; flex:1; }
-  .item input[type=checkbox]{ width:22px; height:22px; border-radius:50%; accent-color:var(--green); cursor:pointer; }
+
+  /* КРУГЛЫЕ флажки (кастомные) */
+  .chk{ appearance:none; -webkit-appearance:none; width:22px; height:22px; border-radius:50%;
+        border:2px solid var(--line); background:#fff; cursor:pointer; display:inline-block; }
+  .chk:checked{
+    border-color:var(--green); background-color:var(--green);
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="white" d="M8.143 13.314L4.7 9.871l-1.4 1.4 4.843 4.843 8.514-8.514-1.4-1.4z"/></svg>');
+    background-repeat:no-repeat; background-position:center; background-size:14px 14px;
+  }
+
   .text{ flex:1; word-break:break-word; }
   li.completed .text{ color:var(--muted); opacity:.6; text-decoration:line-through; text-decoration-thickness:2px; }
-  .prio{
-    width:10px; height:10px; border-radius:50%;
-    box-shadow:0 0 0 2px #fff inset, 0 0 0 2px var(--line);
-  }
-  .p-hi{ background:var(--hi) }
-  .p-mid{ background:var(--mid) }
-  .p-low{ background:var(--low) }
-  .p-none{ background:var(--none) }
-  .del{
-    border:1px solid var(--line); background:#fff; color:#d00; width:34px; height:34px; border-radius:10px; cursor:pointer;
-  }
+
+  .prio{ width:10px; height:10px; border-radius:50%; box-shadow:0 0 0 2px #fff inset, 0 0 0 2px var(--line); }
+  .p-hi{ background:var(--hi) } .p-mid{ background:var(--mid) }
+  .p-low{ background:var(--low) } .p-none{ background:var(--none) }
+
+  .del{ border:1px solid var(--line); background:#fff; color:#d00; width:34px; height:34px; border-radius:10px; cursor:pointer; }
   .hint{ color:var(--muted); font-size:12px; margin:8px 10px; }
 </style>
 </head>
 <body>
   <div class="app">
-    <div class="top">
-      <button class="burger" aria-label="menu"></button>
-      <div class="title">To‑Do list</div>
-      <div class="icons">
-        <button class="icon" aria-label="calendar"></button>
-        <button class="icon" aria-label="more"></button>
-      </div>
-    </div>
+    <div class="top"><div class="title">To‑Do list</div></div>
 
-    <!-- Календарь: горизонтальная лента -->
+    <!-- Календарь -->
     <div class="cal">
       <button class="cal-btn" id="prevWeek" aria-label="prev">←</button>
       <div class="cal-strip" id="calStrip"></div>
       <button class="cal-btn" id="nextWeek" aria-label="next">→</button>
     </div>
 
-    <!-- Добавление задачи -->
+    <!-- Добавление -->
     <div class="add">
       <input id="taskInput" type="text" placeholder="Новая задача…" />
       <select id="prioSelect" title="Приоритет">
@@ -121,10 +93,10 @@
       <button id="addBtn">Добавить</button>
     </div>
 
-    <!-- Активные задачи -->
+    <!-- Активные -->
     <div class="card">
       <ul id="activeList"></ul>
-      <div class="hint">Клик по флажку или тексту — отметить/снять. Выполненные автоматически окажутся ниже, в «Completed».</div>
+      <div class="hint">Выбирайте день вверху. Задачи хранятся отдельно для каждой даты. Клик по флажку/тексту — отметить.</div>
     </div>
 
     <!-- Completed -->
@@ -136,19 +108,20 @@
 
 <script>
 const $ = s => document.querySelector(s);
-const activeList = $("#activeList");
-const doneList   = $("#doneList");
-const input      = $("#taskInput");
-const prioSel    = $("#prioSelect");
-const addBtn     = $("#addBtn");
 
-let state = JSON.parse(localStorage.getItem("todo-v3") || '{"tasks":[]}');
+/* ---------- state ---------- */
+// структура: { selected:"YYYY-MM-DD", days:{ "YYYY-MM-DD": [ {text, prio, done, created} ] } }
+let state = JSON.parse(localStorage.getItem("todo-v4") || '{"selected":"","days":{}}');
 
-function save(){ localStorage.setItem("todo-v3", JSON.stringify(state)); }
+function save(){ localStorage.setItem("todo-v4", JSON.stringify(state)); }
+function isoDate(d){ const x=new Date(d); x.setHours(0,0,0,0); return x.toISOString().slice(0,10); }
+function todayISO(){ return isoDate(new Date()); }
 
-/* ---------- Calendar strip ---------- */
+if(!state.selected) { state.selected = todayISO(); save(); }
+
+/* ---------- calendar ---------- */
 const calStrip = $("#calStrip");
-let weekOffset = 0; // 0 = текущая неделя, -1 предыдущая, +1 следующая
+let weekAnchor = new Date(state.selected); // неделя где лежит выбранный день
 const DOW = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
 function startOfWeek(d){
@@ -159,65 +132,89 @@ function startOfWeek(d){
   return dt;
 }
 function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+
 function renderWeek(){
   calStrip.innerHTML = "";
-  const today = new Date();
-  const start = addDays(startOfWeek(today), weekOffset*7);
+  const start = startOfWeek(weekAnchor);
+  const sel = state.selected;
+  const today = todayISO();
 
   for(let i=0;i<7;i++){
     const d = addDays(start,i);
+    const id = isoDate(d);
+
     const el = document.createElement("div");
     el.className = "day";
-    if(d.toDateString() === today.toDateString()) el.classList.add("active");
+    if(id === today) el.classList.add("today");
+    if(id === sel) el.classList.add("selected");
+
     const dow = document.createElement("div"); dow.className="dow"; dow.textContent = DOW[i];
     const num = document.createElement("div"); num.className="dnum"; num.textContent = d.getDate();
     el.appendChild(dow); el.appendChild(num);
+    el.addEventListener("click", () => { state.selected = id; weekAnchor = d; save(); renderWeek(); renderTasks(); });
     calStrip.appendChild(el);
   }
 }
-$("#prevWeek").addEventListener("click", ()=>{ weekOffset--; renderWeek(); });
-$("#nextWeek").addEventListener("click", ()=>{ weekOffset++; renderWeek(); });
+$("#prevWeek").addEventListener("click", ()=>{ weekAnchor = addDays(weekAnchor,-7); renderWeek(); });
+$("#nextWeek").addEventListener("click", ()=>{ weekAnchor = addDays(weekAnchor, 7); renderWeek(); });
 renderWeek();
 
-/* ---------- Tasks ---------- */
+/* ---------- tasks for selected day ---------- */
+const activeList = $("#activeList");
+const doneList   = $("#doneList");
+const input      = $("#taskInput");
+const prioSel    = $("#prioSelect");
+const addBtn     = $("#addBtn");
+
+const prioOrder = { hi:0, mid:1, low:2, none:3 };
+
+function tasksForSelected(){
+  const key = state.selected;
+  if(!state.days[key]) state.days[key] = [];
+  return state.days[key];
+}
+
 function addTask(){
   const text = input.value.trim();
   if(!text) return;
-  const prio = prioSel.value; // hi, mid, low, none
-  state.tasks.push({ text, prio, done:false, created:Date.now() });
+  const prio = prioSel.value;
+  const tasks = tasksForSelected();
+  tasks.push({ text, prio, done:false, created:Date.now() });
   input.value = ""; prioSel.value = "none";
-  render(); save();
+  save(); renderTasks();
 }
 addBtn.addEventListener("click", addTask);
 input.addEventListener("keypress", e => { if(e.key==="Enter") addTask(); });
 
-function toggleTask(idx){
-  state.tasks[idx].done = !state.tasks[idx].done;
-  render(); save();
+function toggleTask(index){
+  const tasks = tasksForSelected();
+  tasks[index].done = !tasks[index].done;
+  save(); renderTasks();
 }
-function delTask(idx){
-  state.tasks.splice(idx,1);
-  render(); save();
+function delTask(index){
+  const tasks = tasksForSelected();
+  tasks.splice(index,1);
+  save(); renderTasks();
 }
 
-const prioOrder = { hi:0, mid:1, low:2, none:3 };
-function render(){
-  const active = state.tasks.filter(t=>!t.done)
+function renderTasks(){
+  const tasks = tasksForSelected();
+  const active = tasks.filter(t=>!t.done)
     .sort((a,b)=> prioOrder[a.prio]-prioOrder[b.prio] || a.created-b.created);
-  const done   = state.tasks.filter(t=>t.done)
+  const done   = tasks.filter(t=> t.done)
     .sort((a,b)=> a.created-b.created);
 
-  // Визуал активных
+  // active
   activeList.innerHTML = "";
   active.forEach(task=>{
-    const idx = state.tasks.indexOf(task);
+    const idx = tasks.indexOf(task);
     const li  = document.createElement("li");
 
     const label = document.createElement("label");
     label.className = "item";
 
     const cb = document.createElement("input");
-    cb.type = "checkbox"; cb.checked = false;
+    cb.type = "checkbox"; cb.className = "chk"; cb.checked = false;
     cb.addEventListener("change", ()=>toggleTask(idx));
 
     const dot = document.createElement("span");
@@ -237,10 +234,10 @@ function render(){
     activeList.appendChild(li);
   });
 
-  // Визуал завершённых
+  // done
   doneList.innerHTML = "";
   done.forEach(task=>{
-    const idx = state.tasks.indexOf(task);
+    const idx = tasks.indexOf(task);
     const li  = document.createElement("li");
     li.classList.add("completed");
 
@@ -248,7 +245,7 @@ function render(){
     label.className = "item";
 
     const cb = document.createElement("input");
-    cb.type = "checkbox"; cb.checked = true;
+    cb.type = "checkbox"; cb.className = "chk"; cb.checked = true;
     cb.addEventListener("change", ()=>toggleTask(idx));
 
     const dot = document.createElement("span");
@@ -268,11 +265,11 @@ function render(){
     doneList.appendChild(li);
   });
 
-  // пересохраняем порядок (активные сверху, завершённые снизу)
-  state.tasks = [...active, ...done];
+  // сохраняем новый порядок (активные сверху, выполненные снизу)
+  state.days[state.selected] = [...active, ...done];
   save();
 }
-render();
+renderTasks();
 </script>
 </body>
 </html>
