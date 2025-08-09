@@ -9,22 +9,25 @@
     --bg:#f7f8fb; --card:#ffffff; --text:#0f172a; --muted:#94a3b8;
     --line:#e8ecf1; --accent:#0ea5e9; --green:#16a34a; --danger:#ef4444;
     --hi:#ef4444; --mid:#f59e0b; --low:#22c55e; --none:#cbd5e1;
-    --day-radius:12px; --day-gap:6px; --day-pad:6px; /* компактнее дни */
+    --day-radius:12px; --day-gap:6px; --day-pad:6px;
   }
   *{box-sizing:border-box}
   body{ margin:0; background:var(--bg); color:var(--text);
         font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
   .app{ max-width:720px; margin:0 auto; padding:16px 12px 28px; }
-
   .title{ font-weight:800; font-size:18px; margin:0 0 10px 2px; }
 
-  /* КАЛЕНДАРЬ: свайп по неделям, в каждой неделе 7 мелких ячеек, всё влезает */
+  /* Календарь: неделя помещается целиком; скроллбар скрыт */
   .cal{ background:var(--card); border:1px solid var(--line); border-radius:16px;
         padding:6px; margin-bottom:14px; }
   .cal-viewport{
     overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
     display:flex; gap:0;
+    /* скрываем полосы прокрутки */
+    scrollbar-width: none;            /* Firefox */
+    -ms-overflow-style: none;         /* IE/Edge legacy */
   }
+  .cal-viewport::-webkit-scrollbar{ display:none; } /* Chrome/Safari */
   .week{
     flex:0 0 100%;
     display:grid; grid-template-columns:repeat(7,1fr);
@@ -32,21 +35,30 @@
   }
   .day{
     background:#fff; border:1px solid var(--line); border-radius:var(--day-radius);
-    padding:var(--day-pad) 4px; text-align:center; cursor:pointer;
-    user-select:none;
+    padding:var(--day-pad) 4px; text-align:center; cursor:pointer; user-select:none;
   }
   .dow{ font-size:10px; color:var(--muted); line-height:1; }
   .dnum{ font-weight:700; font-size:14px; line-height:1.2; }
   .day.today{ outline:2px solid rgba(14,165,233,.25); }
   .day.selected{ background:rgba(14,165,233,.1); border-color:rgba(14,165,233,.4); }
 
-  /* Добавление */
-  .add{ display:flex; gap:8px; margin:12px 0; background:var(--card); border:1px solid var(--line);
-        border-radius:16px; padding:10px; }
-  .add input[type=text]{ flex:1; padding:12px; border:1px solid var(--line); background:#fff;
-                         border-radius:12px; outline:none; }
-  .add select{ padding:12px; border:1px solid var(--line); background:#fff; border-radius:12px; outline:none; }
-  .add button{ padding:12px 14px; border:0; background:var(--accent); color:#fff; border-radius:12px; cursor:pointer; }
+  /* Добавление задачи: инпут не вылезает, селект фикс ширины */
+  .add{
+    display:flex; gap:8px; margin:12px 0; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:10px; align-items:stretch;
+  }
+  .add input[type=text]{
+    flex:1; min-width:0; /* важное — позволяет ужаться в строке */
+    padding:12px; border:1px solid var(--line); background:#fff;
+    border-radius:12px; outline:none;
+  }
+  .add select{
+    width:96px; flex:0 0 auto; /* фикс, чтобы не прыгало */
+    padding:12px; border:1px solid var(--line); background:#fff; border-radius:12px; outline:none;
+  }
+  .add button{
+    padding:12px 14px; border:0; background:var(--accent); color:#fff; border-radius:12px; cursor:pointer;
+  }
 
   /* Списки */
   .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:6px 6px 10px; }
@@ -81,7 +93,7 @@
   <div class="app">
     <h2 class="title">To‑Do list</h2>
 
-    <!-- Календарь: свайп по неделям, внутри неделя помещается целиком -->
+    <!-- Календарь: свайп по неделям, без видимого скроллбара -->
     <div class="cal">
       <div class="cal-viewport" id="calViewport"></div>
     </div>
@@ -115,8 +127,8 @@
 const $ = s => document.querySelector(s);
 
 /* ---------- state ---------- */
-let state = JSON.parse(localStorage.getItem("todo-v5") || '{"selected":"","days":{}}');
-const save = () => localStorage.setItem("todo-v5", JSON.stringify(state));
+let state = JSON.parse(localStorage.getItem("todo-v6") || '{"selected":"","days":{}}');
+const save = () => localStorage.setItem("todo-v6", JSON.stringify(state));
 const isoDate = d => { const x=new Date(d); x.setHours(0,0,0,0); return x.toISOString().slice(0,10); };
 const todayISO = () => isoDate(new Date());
 if(!state.selected) { state.selected = todayISO(); save(); }
@@ -132,7 +144,7 @@ let anchor = new Date(state.selected); // неделя для позициони
 function renderWeeks() {
   vp.innerHTML = "";
   const base = startOfWeek(anchor);
-  const pages = 12; // 12 недель (±6) хватит для свайпа
+  const pages = 12; // 12 недель (±6)
   const center = Math.floor(pages/2);
 
   for(let w=0; w<pages; w++){
@@ -166,7 +178,6 @@ function renderWeeks() {
     vp.appendChild(week);
   }
 
-  // прокрутить к центральной (текущей) неделе
   const currentWeek = vp.children[center];
   if(currentWeek) currentWeek.scrollIntoView({behavior:"auto", inline:"start"});
 }
@@ -178,8 +189,7 @@ const doneList   = $("#doneList");
 const input      = $("#taskInput");
 const prioSel    = $("#prioSelect");
 const addBtn     = $("#addBtn");
-
-const prioOrder = { hi:0, mid:1, low:2, none:3 };
+const prioOrder  = { hi:0, mid:1, low:2, none:3 };
 
 function tasksForSelected(){
   const key = state.selected;
